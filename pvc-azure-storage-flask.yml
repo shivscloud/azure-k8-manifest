@@ -114,6 +114,10 @@ spec:
       labels:
         app: flask-app
     spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox
+        command: ['sh', '-c', 'until nc -z -w 5 postgres-service 5432; do echo "Waiting for PostgreSQL to start"; sleep 5; done;']
       containers:
       - name: flask-container
         image: rajeshsingam/prod-working-flask:latest
@@ -122,6 +126,18 @@ spec:
         envFrom:
         - configMapRef:
             name: flask-config
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health
+        #     port: 5000
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 30
 ---
 # flask-service.yaml
 apiVersion: v1
